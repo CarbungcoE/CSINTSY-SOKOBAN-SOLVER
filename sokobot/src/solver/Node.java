@@ -23,149 +23,27 @@ public class Node {
         this.path = path;
         generateLists();
         findPlayerCoords();
-        // System.out.println("generated node with path: " + path);
-        // for(int i = 0 ; i < height; i++) {
-        //     for(int j = 0; j < width; j++) {
-        //         System.out.print("'" + itemsData[i][j] + "'");
-        //     }
-        //     System.out.println();
-        // }
+        System.out.println("generated node with path: " + path);
+        for(int i = 0 ; i < height; i++) {
+            for(int j = 0; j < width; j++) {
+                System.out.print("'" + itemsData[i][j] + "'");
+            }
+            System.out.println();
+        }
     }
 
     public boolean isADeadState() {
         for(int[] crate : crateList) {
             for(int[] deadlockSquare : deadSquares) {
                 if(crate[0] == deadlockSquare[0] && crate[1] == deadlockSquare[1]){
-                    //debugging
-                    //System.out.println("simpleDeadlockDetected");
                     return true;
                 }
             }
         }
-        return detectFreezeDeadlock();
-    }
-
-    boolean detectFreezeDeadlock() {
-        for(int[] crate : crateList) {
-            int row = crate[0], col = crate[1];
-            if(checkForFrozenCrate(crate, mapData) && mapData[row][col] != '.') { //if crate is frozen and it is not frozen inside of a goal, then the game is bricked
-                //debugging
-                //System.out.println("freezeDeadlockDetected");
-                return true;
-            }
-        }
-
         return false;
     }
 
-    //returns true if crate is frozen
-    boolean checkForFrozenCrate(int[] crateCoordinate, char[][] mapChecked) { //will use a passed map instead of the attribute map because of the recursive check (will pass boxes as walls if it is already checked)
-        int canMoveVertical = 1, canMoveHorizontal = 1; //flags
-        int row = crateCoordinate[0], col = crateCoordinate[1];
-        int leftDeadSquare = 0, rightDeadSquare = 0, upDeadSquare = 0, downDeadSquare = 0; //deadlock flags
-
-        
-        //check 1 wall check
-        if(row + 1 < height && row - 1 > 0 && (mapChecked[row+1][col] == '#' || mapChecked[row-1][col] == '#')) {//vertical check
-            canMoveVertical = 0;
-        }
-        if(col + 1 < width && col - 1 > 0 && (mapChecked[row][col+1] == '#' || mapChecked[row][col-1] == '#')) {//horizontal check
-            canMoveHorizontal = 0;
-        }
-
-        if(canMoveHorizontal == 0 && canMoveVertical == 0) {
-            return true;
-        }
-        //check 2 deadsquare check
-        for(int[] deadSquare : deadSquares) {
-            if(deadSquare[0] == row-1 && deadSquare[1] == col) { //row above
-                upDeadSquare = 1;
-            }
-            if(deadSquare[0] == row+1 && deadSquare[1] == col) { //row below
-                downDeadSquare = 1;
-            }
-            if(deadSquare[0] == row && deadSquare[1] == col-1) { //col left
-                leftDeadSquare = 1;
-            }
-            if(deadSquare[0] == row && deadSquare[1] == col+1) { //col right
-                rightDeadSquare = 1;
-            }
-
-        }
-
-        if(upDeadSquare == 1 && downDeadSquare == 1) {
-            canMoveVertical = 0;
-        }
-        if(rightDeadSquare == 1 && leftDeadSquare == 1) {
-            canMoveHorizontal = 0;
-        }
-
-        if(canMoveHorizontal == 0 && canMoveVertical == 0) {
-            return true;
-        }
-
-        //check 3 crate check
-        if(row - 1 >= 0 && itemsData[row-1][col] == '$' && mapChecked[row-1][col] != '#') { //upcrate
-            char[][] recursiveMapCheck = new char[height][width];
-            for(int i = 0; i < height; i++) {
-                for(int j = 0; j < width; j++) {
-                    recursiveMapCheck[i][j] = mapChecked[i][j];
-                }
-            }
-            recursiveMapCheck[row][col] = '#';
-            if(checkForFrozenCrate(new int[]{row-1,col}, recursiveMapCheck)) {
-                canMoveVertical = 0;
-            }
-        }
-
-        if(row + 1 < height && itemsData[row+1][col] == '$' && mapChecked[row+1][col] != '#') { //downcrate
-            char[][] recursiveMapCheck = new char[height][width];
-            for(int i = 0; i < height; i++) {
-                for(int j = 0; j < width; j++) {
-                    recursiveMapCheck[i][j] = mapChecked[i][j];
-                }
-            }
-            recursiveMapCheck[row][col] = '#';
-            if(checkForFrozenCrate(new int[]{row+1,col}, recursiveMapCheck)) {
-                canMoveVertical = 0;
-            }
-        }
-
-        if(col - 1 >= 0 && itemsData[row][col-1] == '$' && mapChecked[row][col-1] != '#') { //leftCrate
-            char[][] recursiveMapCheck = new char[height][width];
-            for(int i = 0; i < height; i++) {
-                for(int j = 0; j < width; j++) {
-                    recursiveMapCheck[i][j] = mapChecked[i][j];
-                }
-            }
-            recursiveMapCheck[row][col] = '#';
-            if(checkForFrozenCrate(new int[]{row,col-1}, recursiveMapCheck)) {
-                canMoveHorizontal = 0;
-            }
-        }
-
-        if(col + 1 < width && itemsData[row][col+1] == '$' && mapChecked[row][col+1] != '#') { //leftCrate
-            char[][] recursiveMapCheck = new char[height][width];
-            for(int i = 0; i < height; i++) {
-                for(int j = 0; j < width; j++) {
-                    recursiveMapCheck[i][j] = mapChecked[i][j];
-                }
-            }
-            recursiveMapCheck[row][col] = '#';
-            if(checkForFrozenCrate(new int[]{row,col+1}, recursiveMapCheck)) {
-                canMoveHorizontal = 0;
-            }
-        }
-
-        if(canMoveHorizontal == 0 && canMoveVertical == 0) {
-            return true;
-        }
-
-
-        return false;
-    }
-
-    public void generateDeadSquareDeadlocks() { //this will only ever be called once to initiate the static simple deadstate squares
+    public void generateDeadSquareDeadlocks() {
         //simpleDeadlockSquares will be all areas left unexplored
         ArrayList<int[]> simpleDeadLockSquares = new ArrayList<int[]>();
         ArrayList<int[]> openList = new ArrayList<int[]>();
@@ -176,7 +54,6 @@ public class Node {
         //for movement checking
         int wallcheckRow, wallcheckCol, adjacentRow, adjacentCol, row, col, flag;
         openList.addAll(targetList);
-        //note: there is a bug here in the case of a target the is adjacent to the edge (no walls), but i think all testcases will have walls encompassing the edge so i think it's fine?
         while(!(openList.isEmpty())) {
             for(int[] coordinate : openList) {
                 removeFromOpenList.add(coordinate);
@@ -193,6 +70,8 @@ public class Node {
                         if(mapData[row][wallcheckCol] != '#'){
                             addToOpenList.add(new int[]{row,adjacentCol});
                         }
+                    } else if (!(wallcheckCol < width && wallcheckCol > 0)) {
+                        addToOpenList.add(new int[]{row,adjacentCol});
                     }
                 }
                 //left
@@ -203,6 +82,8 @@ public class Node {
                         if(mapData[row][wallcheckCol] != '#'){
                             addToOpenList.add(new int[]{row,adjacentCol});
                         }
+                    } else if (!(wallcheckCol < width && wallcheckCol > 0)) {
+                        addToOpenList.add(new int[]{row,adjacentCol});
                     }
                 }
                 //down
@@ -211,6 +92,8 @@ public class Node {
                         if(mapData[wallcheckRow][col] != '#'){
                             addToOpenList.add(new int[]{adjacentRow,col});
                         }
+                    } else if (!(wallcheckRow < height && wallcheckRow > 0)) {
+                        addToOpenList.add(new int[]{adjacentRow,col});
                     }
                 }
                 //up
@@ -221,6 +104,8 @@ public class Node {
                         if(mapData[wallcheckRow][col] != '#'){
                             addToOpenList.add(new int[]{adjacentRow,col});
                         }
+                        addToOpenList.add(new int[]{adjacentRow,col});
+                    } else if (!(wallcheckRow < height && wallcheckRow > 0)) {
                         addToOpenList.add(new int[]{adjacentRow,col});
                     }
                     
@@ -296,8 +181,6 @@ public class Node {
                 if(itemsData[i][j] == '@') {
                     coords[0] = i;
                     coords[1] = j;
-                    j = width;
-                    i = height;
                 }
             }
         }
